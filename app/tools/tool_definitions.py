@@ -306,6 +306,20 @@ TOOL_DEFINITIONS = [
 
     # ===== レポート生成ツール =====
     {
+        "name": "generate_morning_briefing",
+        "description": "今日の予定とToDoリストをまとめた朝のブリーフィングを生成してSlackに送信します。毎朝8時に自動実行されますが、手動でも呼び出せます。",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "channel": {
+                    "type": "string",
+                    "description": "送信先チャンネル（省略時はデフォルトチャンネル）",
+                    "default": "",
+                },
+            },
+        },
+    },
+    {
         "name": "generate_daily_report",
         "description": "その日のカレンダーやメールをまとめた日報を生成してSlackに送信します。",
         "input_schema": {

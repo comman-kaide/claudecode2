@@ -1,7 +1,8 @@
 """
 APSchedulerによるバックグラウンドタスク管理
 - リマインダーの定期チェック・送信
-- 日報の自動送信
+- 毎朝8時: 今日の予定＋ToDoリスト通知
+- 毎夕(設定時刻): 日報送信
 """
 
 import asyncio
@@ -28,7 +29,15 @@ def start_scheduler():
         replace_existing=True,
     )
 
-    # 日報自動送信
+    # 毎朝8時: 予定・ToDoリスト通知
+    scheduler.add_job(
+        send_morning_briefing,
+        CronTrigger(hour=8, minute=0, timezone=settings.tz),
+        id="morning_briefing",
+        replace_existing=True,
+    )
+
+    # 夕方の日報自動送信
     report_time = settings.daily_report_time.split(":")
     hour, minute = int(report_time[0]), int(report_time[1])
     scheduler.add_job(
@@ -39,7 +48,9 @@ def start_scheduler():
     )
 
     scheduler.start()
-    logger.info(f"Scheduler started. Daily report at {settings.daily_report_time} JST")
+    logger.info("Scheduler started.")
+    logger.info("Morning briefing: 08:00 JST")
+    logger.info(f"Daily report: {settings.daily_report_time} JST")
 
 
 def stop_scheduler():
@@ -75,8 +86,28 @@ def check_and_send_reminders():
         logger.error(f"Error in check_and_send_reminders: {e}")
 
 
+def send_morning_briefing():
+    """毎朝8時: 今日の予定・ToDoリスト通知を送信"""
+    try:
+        from app.report_generator import generate_morning_briefing
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(
+            generate_morning_briefing(settings.default_slack_channel)
+        )
+        loop.close()
+
+        if result.get("success"):
+            logger.info("Morning briefing sent successfully")
+        else:
+            logger.error(f"Morning briefing failed: {result.get('error')}")
+    except Exception as e:
+        logger.error(f"Error in send_morning_briefing: {e}")
+
+
 def send_scheduled_daily_report():
-    """スケジュールされた日報を送信"""
+    """スケジュールされた夕方の日報を送信"""
     try:
         from app.report_generator import generate_and_send_daily_report
 

@@ -192,10 +192,13 @@ class SecretaryAgent:
 
             # ===== レポートツール =====
             elif tool_name == "generate_daily_report":
-                # インポートを遅延して循環参照を回避
                 from app.report_generator import generate_and_send_daily_report
                 channel = tool_input.get("channel") or settings.default_slack_channel
                 return await generate_and_send_daily_report(channel)
+            elif tool_name == "generate_morning_briefing":
+                from app.report_generator import generate_morning_briefing
+                channel = tool_input.get("channel") or settings.default_slack_channel
+                return await generate_morning_briefing(channel)
 
             else:
                 return {"success": False, "error": f"不明なツール: {tool_name}"}
