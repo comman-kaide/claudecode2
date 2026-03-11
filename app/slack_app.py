@@ -118,12 +118,13 @@ def _handle_message_event(event, say, client):
     if not text:
         return
 
-    # スラッシュコマンド風の処理
-    if text.startswith("/google-auth"):
+    # コマンド処理（スラッシュなし・あり両方対応）
+    text_lower = text.lower().strip()
+    if text_lower in ["google-auth", "/google-auth", "google認証", "googleauth"]:
         _handle_google_auth(say, client, channel, user_id)
         return
 
-    if text.startswith("/help") or text == "ヘルプ":
+    if text_lower in ["/help", "help", "ヘルプ", "使い方"]:
         _handle_help(say)
         return
 
