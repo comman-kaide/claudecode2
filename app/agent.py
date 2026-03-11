@@ -39,7 +39,7 @@ SYSTEM_PROMPT = """あなたは優秀な個人秘書AIです。ユーザーのSl
 class SecretaryAgent:
     def __init__(self):
         self.client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-        self.model = "claude-3-5-sonnet-20241022"
+        self.model = "claude-sonnet-4-5"
 
     async def run(
         self,

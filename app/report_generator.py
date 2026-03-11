@@ -91,7 +91,7 @@ async def _generate_report_with_claude(today_events: dict, unread_emails: dict) 
 """
 
     response = client.messages.create(
-        model="claude-3-5-sonnet-20241022",
+        model="claude-sonnet-4-5",
         max_tokens=2000,
         messages=[{"role": "user", "content": prompt}],
     )
