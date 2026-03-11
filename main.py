@@ -90,11 +90,6 @@ async def google_oauth_callback(code: str, state: str = None):
             "refresh_token": token_resp.get("refresh_token"),
         })
 
-        token_data = json.dumps({
-            "token": creds.token,
-            "refresh_token": creds.refresh_token,
-        })
-
         html = f"""
         <html>
         <body style="font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px;">
