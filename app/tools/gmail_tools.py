@@ -1,5 +1,6 @@
 import base64
 import re
+import traceback
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Optional
@@ -48,7 +49,7 @@ def list_emails(max_results: int = 10, query: str = "is:unread", include_body: b
 
         return {"success": True, "emails": emails, "count": len(emails)}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": str(e), "traceback": traceback.format_exc()}
 
 
 def get_email(message_id: str) -> dict:

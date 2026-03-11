@@ -113,6 +113,38 @@ async def google_oauth_callback(code: str, state: str = None):
 
 # ===== ヘルスチェック =====
 
+@app.get("/debug/gmail")
+async def debug_gmail():
+    """Gmail接続デバッグ用エンドポイント"""
+    from app.utils.google_auth import get_google_credentials
+    from app.tools.gmail_tools import list_emails
+    import traceback
+
+    result = {"steps": {}}
+
+    # Step1: 認証情報取得
+    try:
+        creds = get_google_credentials()
+        result["steps"]["get_credentials"] = "OK" if creds else "FAILED - creds is None"
+        if creds:
+            result["steps"]["token_valid"] = str(creds.valid)
+            result["steps"]["token_expired"] = str(creds.expired)
+    except Exception as e:
+        result["steps"]["get_credentials"] = f"ERROR: {e}"
+        result["steps"]["traceback"] = traceback.format_exc()
+        return result
+
+    # Step2: Gmail API呼び出し
+    try:
+        email_result = list_emails(max_results=1)
+        result["steps"]["gmail_api"] = email_result
+    except Exception as e:
+        result["steps"]["gmail_api"] = f"ERROR: {e}"
+        result["steps"]["traceback"] = traceback.format_exc()
+
+    return result
+
+
 @app.get("/health")
 async def health_check():
     from app.utils.google_auth import is_google_authenticated
