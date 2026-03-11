@@ -46,7 +46,7 @@ def get_google_credentials() -> Optional[Credentials]:
 
 
 def create_oauth_flow() -> Flow:
-    """OAuth2認証フローを作成"""
+    """OAuth2認証フローを作成（PKCEなし）"""
     client_config = {
         "web": {
             "client_id": settings.google_client_id,
@@ -61,7 +61,24 @@ def create_oauth_flow() -> Flow:
         scopes=SCOPES,
         redirect_uri=settings.google_redirect_uri,
     )
+    # PKCEを無効化（コード検証なしでトークン交換できるようにする）
+    flow.code_verifier = None
     return flow
+
+
+def get_auth_url() -> str:
+    """PKCEなしのGoogle認証URLを生成"""
+    import urllib.parse
+    params = {
+        'response_type': 'code',
+        'client_id': settings.google_client_id,
+        'redirect_uri': settings.google_redirect_uri,
+        'scope': ' '.join(SCOPES),
+        'access_type': 'offline',
+        'prompt': 'consent',
+        'state': 'secretary_ai_auth',
+    }
+    return 'https://accounts.google.com/o/oauth2/v2/auth?' + urllib.parse.urlencode(params)
 
 
 def is_google_authenticated() -> bool:

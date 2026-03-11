@@ -66,10 +66,29 @@ async def slack_actions(request: Request):
 async def google_oauth_callback(code: str, state: str = None):
     """Google OAuth2コールバック"""
     try:
-        from app.utils.google_auth import create_oauth_flow
-        flow = create_oauth_flow()
-        flow.fetch_token(code=code)
-        creds = flow.credentials
+        import httpx
+        from config.settings import settings as cfg
+
+        # PKCEなしで直接トークンエンドポイントを叩く
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": code,
+                    "client_id": cfg.google_client_id,
+                    "client_secret": cfg.google_client_secret,
+                    "redirect_uri": cfg.google_redirect_uri,
+                    "grant_type": "authorization_code",
+                },
+            )
+        token_resp = resp.json()
+        if "error" in token_resp:
+            raise Exception(f"{token_resp['error']}: {token_resp.get('error_description', '')}")
+
+        token_data = json.dumps({
+            "token": token_resp.get("access_token"),
+            "refresh_token": token_resp.get("refresh_token"),
+        })
 
         token_data = json.dumps({
             "token": creds.token,
