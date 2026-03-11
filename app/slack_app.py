@@ -1,10 +1,12 @@
 """
-Slackアプリのイベントハンドラー
+Slackアプリのイベントハンドラー（Socket Mode対応）
 """
 
 import asyncio
 import logging
+import threading
 from slack_bolt import App
+from slack_bolt.adapter.socket_mode import SocketModeHandler
 from slack_bolt.adapter.fastapi import SlackRequestHandler
 from config.settings import settings
 from app.agent import SecretaryAgent
@@ -13,14 +15,31 @@ from app.utils.google_auth import create_oauth_flow, is_google_authenticated
 
 logger = logging.getLogger(__name__)
 
-# Slackアプリの初期化
-slack_app = App(
-    token=settings.slack_bot_token,
-    signing_secret=settings.slack_signing_secret,
-)
+# Slackアプリの初期化（Socket Mode: signing_secret不要）
+slack_app = App(token=settings.slack_bot_token)
 
+# Webhook用ハンドラー（Socket ModeではなくHTTP Webhookの場合に使用）
 handler = SlackRequestHandler(slack_app)
+
 agent = SecretaryAgent()
+
+# Socket Modeハンドラー（グローバル）
+_socket_handler = None
+
+
+def start_socket_mode():
+    """Socket Modeを別スレッドで起動"""
+    global _socket_handler
+    if not settings.slack_app_token:
+        logger.warning("SLACK_APP_TOKEN not set. Socket Mode disabled.")
+        return
+    try:
+        _socket_handler = SocketModeHandler(slack_app, settings.slack_app_token)
+        thread = threading.Thread(target=_socket_handler.start, daemon=True)
+        thread.start()
+        logger.info("Slack Socket Mode started.")
+    except Exception as e:
+        logger.error(f"Failed to start Socket Mode: {e}")
 
 
 def get_slack_client():
@@ -161,7 +180,7 @@ def _handle_google_auth(say, client, channel: str, user_id: str):
         )
         say(
             text=f"🔑 Google認証が必要です。\n以下のURLをクリックして認証してください:\n{auth_url}\n\n"
-            "認証後、表示されたコードをこのチャットに貼り付けてください。"
+            "認証後、表示されたJSONをRenderの環境変数 `GOOGLE_TOKEN_JSON` に設定してください。"
         )
     except Exception as e:
         say(f"⚠️ 認証URLの生成に失敗しました: {e}")

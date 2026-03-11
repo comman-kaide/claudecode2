@@ -2,6 +2,7 @@ fastapi>=0.115.6
 uvicorn[standard]>=0.34.0
 slack-bolt>=1.22.0
 slack-sdk>=3.34.0
+websocket-client>=1.8.0
 anthropic>=0.43.0
 google-auth>=2.38.0
 google-auth-oauthlib>=1.2.1

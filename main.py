@@ -1,11 +1,11 @@
 """
-FastAPI メインアプリケーション
+FastAPI メインアプリケーション（Socket Mode対応）
 """
 
 import json
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from config.settings import settings
@@ -26,7 +26,13 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Secretary AI...")
     init_db()
     start_scheduler()
+
+    # Socket Mode起動（xapp-トークンがあれば）
+    from app.slack_app import start_socket_mode
+    start_socket_mode()
+
     yield
+
     # 終了時
     stop_scheduler()
     logger.info("Secretary AI stopped.")
@@ -40,18 +46,16 @@ app = FastAPI(
 )
 
 
-# ===== Slack Webhook =====
+# ===== Slack Webhook（Socket ModeがOFFの場合のフォールバック）=====
 
 @app.post("/slack/events")
 async def slack_events(request: Request):
-    """Slackイベント受信エンドポイント"""
     from app.slack_app import handler
     return await handler.handle(request)
 
 
 @app.post("/slack/actions")
 async def slack_actions(request: Request):
-    """Slackアクション受信エンドポイント"""
     from app.slack_app import handler
     return await handler.handle(request)
 
@@ -79,8 +83,9 @@ async def google_oauth_callback(code: str, state: str = None):
             <p>以下のJSON文字列をRenderの環境変数 <code>GOOGLE_TOKEN_JSON</code> に設定してください：</p>
             <textarea style="width:100%; height:120px; font-family:monospace; padding:10px;"
                       onclick="this.select()">{token_data}</textarea>
-            <p>設定後、RenderでWebサービスを再起動してください。</p>
-            <p>このページを閉じてSlackに戻ってください。</p>
+            <p>① 上のテキストを全選択してコピー</p>
+            <p>② Render → Environment → <code>GOOGLE_TOKEN_JSON</code> に貼り付け → Save Changes</p>
+            <p>③ Renderでサービスを再起動</p>
         </body>
         </html>
         """
@@ -96,7 +101,6 @@ async def google_oauth_callback(code: str, state: str = None):
 
 @app.get("/health")
 async def health_check():
-    """ヘルスチェックエンドポイント（Render用）"""
     from app.utils.google_auth import is_google_authenticated
     return {
         "status": "healthy",
