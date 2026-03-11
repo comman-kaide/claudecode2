@@ -27,7 +27,7 @@ def list_emails(max_results: int = 10, query: str = "is:unread", include_body: b
         emails = []
         for msg in messages:
             msg_data = service.users().messages().get(
-                userId="me", messageId=msg["id"], format="full"
+                userId="me", id=msg["id"], format="full"
             ).execute()
 
             headers = {h["name"]: h["value"] for h in msg_data["payload"].get("headers", [])}
@@ -57,7 +57,7 @@ def get_email(message_id: str) -> dict:
     try:
         service = get_gmail_service()
         msg_data = service.users().messages().get(
-            userId="me", messageId=message_id, format="full"
+            userId="me", id=message_id, format="full"
         ).execute()
 
         headers = {h["name"]: h["value"] for h in msg_data["payload"].get("headers", [])}
@@ -111,7 +111,7 @@ def reply_email(message_id: str, body: str, reply_all: bool = False) -> dict:
     try:
         service = get_gmail_service()
         original = service.users().messages().get(
-            userId="me", messageId=message_id, format="full"
+            userId="me", id=message_id, format="full"
         ).execute()
 
         headers = {h["name"]: h["value"] for h in original["payload"].get("headers", [])}
@@ -153,7 +153,7 @@ def mark_as_read(message_id: str) -> dict:
         service = get_gmail_service()
         service.users().messages().modify(
             userId="me",
-            messageId=message_id,
+            id=message_id,
             body={"removeLabelIds": ["UNREAD"]},
         ).execute()
         return {"success": True, "message": "既読にしました"}
