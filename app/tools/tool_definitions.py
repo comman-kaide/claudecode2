@@ -103,6 +103,15 @@ TOOL_DEFINITIONS = [
         },
     },
 
+    {
+        "name": "calendar_list_calendars",
+        "description": "利用可能なGoogleカレンダーの一覧を取得します。共有カレンダーや複数カレンダーの確認に使用します。",
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+        },
+    },
+
     # ===== Gmailツール =====
     {
         "name": "gmail_list_emails",

@@ -133,6 +133,8 @@ class SecretaryAgent:
                 return calendar_tools.update_event(tool_input["event_id"], **kwargs)
             elif tool_name == "calendar_delete_event":
                 return calendar_tools.delete_event(tool_input["event_id"])
+            elif tool_name == "calendar_list_calendars":
+                return calendar_tools.list_calendars()
 
             # ===== Gmailツール =====
             elif tool_name == "gmail_list_emails":

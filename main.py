@@ -62,6 +62,29 @@ async def slack_actions(request: Request):
 
 # ===== Google OAuth =====
 
+@app.get("/debug/calendars")
+async def debug_calendars():
+    """利用可能なカレンダー一覧を取得"""
+    from app.utils.google_auth import get_google_credentials
+    from googleapiclient.discovery import build
+    try:
+        creds = get_google_credentials()
+        service = build("calendar", "v3", credentials=creds)
+        calendar_list = service.calendarList().list().execute()
+        calendars = []
+        for cal in calendar_list.get("items", []):
+            calendars.append({
+                "id": cal["id"],
+                "summary": cal.get("summary", ""),
+                "primary": cal.get("primary", False),
+                "accessRole": cal.get("accessRole", ""),
+            })
+        return {"calendars": calendars, "count": len(calendars)}
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
+
+
 @app.get("/oauth/callback")
 async def google_oauth_callback(code: str, state: str = None):
     """Google OAuth2コールバック"""
