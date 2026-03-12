@@ -47,10 +47,19 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    # Renderスリープ対策: 10分ごとに自己pingしてサービスを起こし続ける
+    scheduler.add_job(
+        keep_alive_ping,
+        IntervalTrigger(minutes=10),
+        id="keep_alive",
+        replace_existing=True,
+    )
+
     scheduler.start()
     logger.info("Scheduler started.")
     logger.info("Morning briefing: 08:00 JST")
     logger.info(f"Daily report: {settings.daily_report_time} JST")
+    logger.info("Keep-alive ping: every 10 minutes")
 
 
 def stop_scheduler():
@@ -58,6 +67,21 @@ def stop_scheduler():
     if scheduler.running:
         scheduler.shutdown()
         logger.info("Scheduler stopped")
+
+
+def keep_alive_ping():
+    """Renderのスリープを防ぐための自己ping"""
+    try:
+        import urllib.request
+        from config.settings import settings
+        # Renderのサービス自身にpingする（環境変数からURL取得、なければスキップ）
+        render_url = getattr(settings, 'render_external_url', None)
+        if not render_url:
+            render_url = "https://secretary-ai-ve06.onrender.com"
+        urllib.request.urlopen(f"{render_url}/health", timeout=10)
+        logger.debug("Keep-alive ping sent")
+    except Exception as e:
+        logger.debug(f"Keep-alive ping failed (non-critical): {e}")
 
 
 def check_and_send_reminders():

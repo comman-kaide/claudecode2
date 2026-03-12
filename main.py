@@ -168,13 +168,46 @@ async def debug_gmail():
     return result
 
 
+@app.get("/debug/scheduler")
+async def debug_scheduler():
+    """スケジューラーの状態と登録ジョブを確認"""
+    from app.scheduler import scheduler
+    jobs = []
+    for job in scheduler.get_jobs():
+        jobs.append({
+            "id": job.id,
+            "name": job.name,
+            "next_run_time": str(job.next_run_time) if job.next_run_time else "未設定",
+            "trigger": str(job.trigger),
+        })
+    return {
+        "scheduler_running": scheduler.running,
+        "jobs": jobs,
+        "job_count": len(jobs),
+    }
+
+
+@app.post("/debug/test-morning-briefing")
+async def test_morning_briefing():
+    """朝のブリーフィングを今すぐテスト送信"""
+    try:
+        from app.report_generator import generate_morning_briefing
+        result = await generate_morning_briefing(settings.default_slack_channel)
+        return result
+    except Exception as e:
+        import traceback
+        return {"success": False, "error": str(e), "traceback": traceback.format_exc()}
+
+
 @app.get("/health")
 async def health_check():
     from app.utils.google_auth import is_google_authenticated
+    from app.scheduler import scheduler
     return {
         "status": "healthy",
         "google_authenticated": is_google_authenticated(),
-        "scheduler_running": True,
+        "scheduler_running": scheduler.running,
+        "scheduled_jobs": len(scheduler.get_jobs()),
     }
 
 
